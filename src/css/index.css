@@ -23,25 +23,24 @@ canvas {
   display: block;
 }
 
-/* Neon green overlay text at top */
+/* Light blue top overlay */
 .status-overlay.top {
   position: absolute;
   top: 1rem;
   left: 50%;
   transform: translateX(-50%);
-  color: #39ff14; /* Neon green */
+  color: #4fc3f7; /* Light blue */
   font-size: 1.25rem;
   font-weight: bold;
   text-align: center;
-  text-shadow: 0 0 5px #39ff14, 0 0 10px #39ff14;
+  text-shadow: 0 0 5px #4fc3f7, 0 0 10px #4fc3f7;
   padding: 0.5rem 1rem;
   background: rgba(0, 0, 0, 0.5);
   border-radius: 6px;
   max-width: 90%;
-  word-wrap: break-word;
 }
 
-/* Start button centered at bottom */
+/* Start button with light blue */
 .start-button {
   position: absolute;
   bottom: 2rem;
@@ -49,16 +48,27 @@ canvas {
   transform: translateX(-50%);
   padding: 1rem 2rem;
   font-size: 1.25rem;
-  background: #39ff14;
+  background: #4fc3f7;
   color: #000;
   border: none;
   border-radius: 6px;
   cursor: pointer;
   font-weight: bold;
-  box-shadow: 0 0 10px #39ff14;
+  box-shadow: 0 0 10px #4fc3f7;
 }
 
-/* Hide video element */
+/* Full page layout */
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  background: black;
+  font-family: Arial, sans-serif;
+}
+
+/* Hide video stream */
 video {
   display: none;
 }
+

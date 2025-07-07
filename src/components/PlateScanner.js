@@ -1,5 +1,5 @@
 /* global cv */
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import axios from "axios";
 
 function PlateScanner() {
@@ -9,57 +9,67 @@ function PlateScanner() {
   const [detectedText, setDetectedText] = useState("");
   const [cameraStarted, setCameraStarted] = useState(false);
   const frameCounter = useRef(0);
+  const lastApiCallTimeRef = useRef(0);
+  const cooldownPeriod = 5000; // 5 seconds
 
   const processFrame = () => {
     try {
+      const video = videoRef.current;
       const canvas = canvasRef.current;
       const ctx = canvas.getContext("2d");
 
-      if (!videoRef.current || videoRef.current.readyState < 2) {
+      if (!video || video.readyState < 2) {
         requestAnimationFrame(processFrame);
         return;
       }
 
-      ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-      let src = cv.imread(canvas);
-      let gray = new cv.Mat();
-      let edges = new cv.Mat();
-      let contours = new cv.MatVector();
-      let hierarchy = new cv.Mat();
+      const src = cv.imread(canvas);
+      const gray = new cv.Mat();
+      const edges = new cv.Mat();
+      const contours = new cv.MatVector();
+      const hierarchy = new cv.Mat();
 
       cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
       cv.Canny(gray, edges, 50, 150, 3, false);
-      cv.findContours(
-        edges,
-        contours,
-        hierarchy,
-        cv.RETR_TREE,
-        cv.CHAIN_APPROX_SIMPLE
-      );
+      cv.findContours(edges, contours, hierarchy, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE);
 
       const candidates = [];
+
       for (let i = 0; i < contours.size(); i++) {
-        let rect = cv.boundingRect(contours.get(i));
-        let aspect = rect.width / rect.height;
+        const contour = contours.get(i);
+        const rect = cv.boundingRect(contour);
+        const aspect = rect.width / rect.height;
+
         if (aspect > 1.8 && aspect < 5 && rect.width > 120) {
           candidates.push(rect);
         }
+
+        contour.delete(); // free memory
       }
 
       if (candidates.length > 0) {
         candidates.sort((a, b) => b.width * b.height - a.width * a.height);
         const rectToCrop = candidates[0];
 
-        ctx.strokeStyle = "red";
+        // Always draw the red rectangle
+        ctx.strokeStyle = "blue";
         ctx.lineWidth = 2;
         ctx.strokeRect(rectToCrop.x, rectToCrop.y, rectToCrop.width, rectToCrop.height);
 
         setStatus("Possible plate detected");
         frameCounter.current++;
 
-        if (frameCounter.current % 100 === 0) {
-          console.log("Detected plate for 300 frames, making API call.");
+        // Only call API after 30 frames + cooldown
+        const now = Date.now();
+        if (
+          frameCounter.current >= 30 &&
+          now - lastApiCallTimeRef.current > cooldownPeriod
+        ) {
+          lastApiCallTimeRef.current = now;
+          frameCounter.current = 0;
+
           const cropCanvas = document.createElement("canvas");
           cropCanvas.width = rectToCrop.width;
           cropCanvas.height = rectToCrop.height;
@@ -80,7 +90,6 @@ function PlateScanner() {
           axios
             .post("https://plate-scanner-server.onrender.com/api/detect-plate", { image: dataURL })
             .then((res) => {
-              console.log("Backend response:", res.data);
               setDetectedText(res.data.plate || "No text detected");
             })
             .catch((err) => {
@@ -93,6 +102,7 @@ function PlateScanner() {
         frameCounter.current = 0;
       }
 
+      // Cleanup Mats
       src.delete();
       gray.delete();
       edges.delete();
@@ -108,7 +118,6 @@ function PlateScanner() {
   const startCamera = async () => {
     try {
       const tempStream = await navigator.mediaDevices.getUserMedia({ video: true });
-
       const devices = await navigator.mediaDevices.enumerateDevices();
       tempStream.getTracks().forEach((track) => track.stop());
 
@@ -121,21 +130,27 @@ function PlateScanner() {
       let constraints;
 
       if (rearCamera) {
-        console.log("Found rear camera:", rearCamera.label);
         constraints = {
-          video: { deviceId: { exact: rearCamera.deviceId } }
+          video: {
+            deviceId: { exact: rearCamera.deviceId },
+            frameRate: { ideal: 30, max: 30 }
+          }
         };
       } else {
-        console.warn("Rear camera not found, using default.");
-        constraints = { video: { facingMode: { ideal: "environment" } } };
+        constraints = {
+          video: {
+            facingMode: { ideal: "environment" },
+            frameRate: { ideal: 30, max: 30 }
+          }
+        };
       }
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
-
       videoRef.current.srcObject = stream;
       videoRef.current.play();
       setTimeout(() => processFrame(), 500);
       setCameraStarted(true);
+      setStatus("No plate detected");
     } catch (err) {
       console.error("Error accessing camera", err);
       setStatus("Camera error");
@@ -145,19 +160,13 @@ function PlateScanner() {
   const checkReady = () => {
     if (window.cv) {
       if (window.cv.Mat) {
-        console.log("OpenCV.js is ready (Mat exists).");
-        setStatus("No plate detected");
         startCamera();
       } else {
-        console.log("Waiting for OpenCV to initialize...");
         window.cv["onRuntimeInitialized"] = () => {
-          console.log("OpenCV.js onRuntimeInitialized fired.");
-          setStatus("No plate detected");
           startCamera();
         };
       }
     } else {
-      console.log("Waiting for OpenCV script to load...");
       setTimeout(checkReady, 100);
     }
   };
@@ -165,20 +174,13 @@ function PlateScanner() {
   return (
     <div>
       <video ref={videoRef} style={{ display: "none" }} />
-      <canvas
-        ref={canvasRef}
-        width={640}
-        height={480}
-      />
+      <canvas ref={canvasRef} width={640} height={480} />
       <div className="status-overlay top">
         <div>Status: {status}</div>
         <div>{detectedText}</div>
       </div>
       {!cameraStarted && (
-        <button
-          className="start-button"
-          onClick={checkReady}
-        >
+        <button className="start-button" onClick={checkReady}>
           Start Camera
         </button>
       )}
