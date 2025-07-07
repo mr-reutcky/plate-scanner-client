@@ -1,3 +1,4 @@
+/* global cv */
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 
@@ -79,7 +80,7 @@ function PlateScanner() {
             const dataURL = cropCanvas.toDataURL("image/jpeg");
 
             axios
-              .post("http://localhost:5000/api/detect-plate", { image: dataURL })
+              .post("https://plate-scanner-server.onrender.com/api/detect-plate", { image: dataURL })
               .then((res) => {
                 console.log("Backend response:", res.data);
                 setDetectedText(res.data.plate || "No text detected");
