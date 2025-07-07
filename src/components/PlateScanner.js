@@ -14,23 +14,20 @@ function PlateScanner() {
         const canvas = canvasRef.current;
         const ctx = canvas.getContext("2d");
 
-        if (
-          !videoRef.current ||
-          videoRef.current.readyState < 2
-        ) {
+        if (!videoRef.current || videoRef.current.readyState < 2) {
           requestAnimationFrame(processFrame);
           return;
         }
 
         ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
 
-        let src = new cv.Mat(canvas.height, canvas.width, cv.CV_8UC4);
+        // Only one src Mat created
+        let src = cv.imread(canvas);
         let gray = new cv.Mat();
         let edges = new cv.Mat();
         let contours = new cv.MatVector();
         let hierarchy = new cv.Mat();
 
-        cv.imread(canvas).copyTo(src);
         cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
         cv.Canny(gray, edges, 50, 150, 3, false);
         cv.findContours(
@@ -41,74 +38,28 @@ function PlateScanner() {
           cv.CHAIN_APPROX_SIMPLE
         );
 
-        let found = false;
-        let rectToCrop = null;
-
+        // Find candidates
+        const candidates = [];
         for (let i = 0; i < contours.size(); i++) {
-          let rectToCrop = null;
-          const candidates = [];
-
-          for (let i = 0; i < contours.size(); i++) {
-            let rect = cv.boundingRect(contours.get(i));
-            let aspect = rect.width / rect.height;
-            if (aspect > 1.8 && aspect < 5 && rect.width > 120) {
-              candidates.push(rect);
-            }
+          let rect = cv.boundingRect(contours.get(i));
+          let aspect = rect.width / rect.height;
+          if (aspect > 1.8 && aspect < 5 && rect.width > 120) {
+            candidates.push(rect);
           }
-
-          if (candidates.length > 0) {
-            candidates.sort((a, b) => b.width * b.height - a.width * a.height);
-            rectToCrop = candidates[0];
-
-            ctx.strokeStyle = "red";
-            ctx.lineWidth = 2;
-            ctx.strokeRect(rectToCrop.x, rectToCrop.y, rectToCrop.width, rectToCrop.height);
-
-            setStatus("Possible plate detected");
-            frameCounter.current++;
-
-            if (frameCounter.current % 300 === 0) {
-              console.log("Detected plate for 300 frames, making API call.");
-              const cropCanvas = document.createElement("canvas");
-              cropCanvas.width = rectToCrop.width;
-              cropCanvas.height = rectToCrop.height;
-              const cropCtx = cropCanvas.getContext("2d");
-              cropCtx.drawImage(
-                canvas,
-                rectToCrop.x,
-                rectToCrop.y,
-                rectToCrop.width,
-                rectToCrop.height,
-                0,
-                0,
-                rectToCrop.width,
-                rectToCrop.height
-              );
-              const dataURL = cropCanvas.toDataURL("image/jpeg");
-
-              axios
-                .post("http://localhost:5000/api/detect-plate", { image: dataURL })
-                .then((res) => {
-                  console.log("Backend response:", res.data);
-                  setDetectedText(res.data.plate || "No text detected");
-                })
-                .catch((err) => {
-                  console.error("API error:", err);
-                  setDetectedText("API error");
-                });
-            }
-          } else {
-            setStatus("No plate detected");
-            frameCounter.current = 0;
-          }
-
         }
 
-        if (found) {
+        if (candidates.length > 0) {
+          candidates.sort((a, b) => b.width * b.height - a.width * a.height);
+          const rectToCrop = candidates[0];
+
+          ctx.strokeStyle = "red";
+          ctx.lineWidth = 2;
+          ctx.strokeRect(rectToCrop.x, rectToCrop.y, rectToCrop.width, rectToCrop.height);
+
           setStatus("Possible plate detected");
           frameCounter.current++;
 
-          if (frameCounter.current % 300 === 0 && rectToCrop) {
+          if (frameCounter.current % 300 === 0) {
             console.log("Detected plate for 300 frames, making API call.");
             const cropCanvas = document.createElement("canvas");
             cropCanvas.width = rectToCrop.width;
@@ -143,6 +94,7 @@ function PlateScanner() {
           frameCounter.current = 0;
         }
 
+        // Always clean up
         src.delete();
         gray.delete();
         edges.delete();
@@ -152,7 +104,6 @@ function PlateScanner() {
         console.error("processFrame error:", error);
       }
 
-      console.log("Processing next frame...");
       requestAnimationFrame(processFrame);
     };
 
