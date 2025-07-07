@@ -105,24 +105,41 @@ function PlateScanner() {
       requestAnimationFrame(processFrame);
     };
 
-    const startCamera = () => {
-      const constraints = {
-        video: {
-          facingMode: { ideal: "environment" } // Prefer rear camera on mobile
-        }
-      };
+    const startCamera = async () => {
+      try {
+        const tempStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        
+        const devices = await navigator.mediaDevices.enumerateDevices();
 
-      navigator.mediaDevices
-        .getUserMedia(constraints)
-        .then((stream) => {
-          videoRef.current.srcObject = stream;
-          videoRef.current.play();
-          setTimeout(() => processFrame(), 500);
-        })
-        .catch((err) => {
-          console.error("Error accessing camera", err);
-          setStatus("Camera error");
-        });
+        tempStream.getTracks().forEach((track) => track.stop());
+
+        const rearCamera = devices.find(
+          (device) =>
+            device.kind === "videoinput" &&
+            /back|rear/i.test(device.label)
+        );
+
+        let constraints;
+
+        if (rearCamera) {
+          console.log("Found rear camera:", rearCamera.label);
+          constraints = {
+            video: { deviceId: { exact: rearCamera.deviceId } }
+          };
+        } else {
+          console.warn("Rear camera not found, using default.");
+          constraints = { video: true };
+        }
+
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+
+        videoRef.current.srcObject = stream;
+        videoRef.current.play();
+        setTimeout(() => processFrame(), 500);
+      } catch (err) {
+        console.error("Error accessing camera", err);
+        setStatus("Camera error");
+      }
     };
 
     const checkReady = () => {
