@@ -22,7 +22,6 @@ function PlateScanner() {
 
         ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
 
-        // Only one src Mat created
         let src = cv.imread(canvas);
         let gray = new cv.Mat();
         let edges = new cv.Mat();
@@ -39,7 +38,6 @@ function PlateScanner() {
           cv.CHAIN_APPROX_SIMPLE
         );
 
-        // Find candidates
         const candidates = [];
         for (let i = 0; i < contours.size(); i++) {
           let rect = cv.boundingRect(contours.get(i));
@@ -95,7 +93,6 @@ function PlateScanner() {
           frameCounter.current = 0;
         }
 
-        // Always clean up
         src.delete();
         gray.delete();
         edges.delete();
@@ -109,8 +106,14 @@ function PlateScanner() {
     };
 
     const startCamera = () => {
+      const constraints = {
+        video: {
+          facingMode: { ideal: "environment" } // Prefer rear camera on mobile
+        }
+      };
+
       navigator.mediaDevices
-        .getUserMedia({ video: true })
+        .getUserMedia(constraints)
         .then((stream) => {
           videoRef.current.srcObject = stream;
           videoRef.current.play();
