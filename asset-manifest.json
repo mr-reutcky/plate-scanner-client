@@ -1,0 +1,12 @@
+{
+  "files": {
+    "main.css": "/plate-scanner-client/static/css/main.31d6cfe0.css",
+    "main.js": "/plate-scanner-client/static/js/main.64aedb9e.js",
+    "index.html": "/plate-scanner-client/index.html",
+    "main.64aedb9e.js.map": "/plate-scanner-client/static/js/main.64aedb9e.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.31d6cfe0.css",
+    "static/js/main.64aedb9e.js"
+  ]
+}
