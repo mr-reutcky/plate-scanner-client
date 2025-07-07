@@ -10,7 +10,7 @@ function PlateScanner() {
   const [cameraStarted, setCameraStarted] = useState(false);
   const frameCounter = useRef(0);
   const lastApiCallTimeRef = useRef(0);
-  const cooldownPeriod = 5000; // 5 seconds
+  const cooldownPeriod = 3000;
 
   const processFrame = () => {
     try {
@@ -46,27 +46,26 @@ function PlateScanner() {
           candidates.push(rect);
         }
 
-        contour.delete(); // free memory
+        contour.delete();
       }
 
       if (candidates.length > 0) {
         candidates.sort((a, b) => b.width * b.height - a.width * a.height);
         const rectToCrop = candidates[0];
 
-        // Always draw the red rectangle
-        ctx.strokeStyle = "blue";
+        ctx.strokeStyle = "red";
         ctx.lineWidth = 2;
         ctx.strokeRect(rectToCrop.x, rectToCrop.y, rectToCrop.width, rectToCrop.height);
 
         setStatus("Possible plate detected");
         frameCounter.current++;
 
-        // Only call API after 30 frames + cooldown
         const now = Date.now();
         if (
           frameCounter.current >= 30 &&
           now - lastApiCallTimeRef.current > cooldownPeriod
         ) {
+          console.log("Making API call after 30 detections and cooldown...");
           lastApiCallTimeRef.current = now;
           frameCounter.current = 0;
 
@@ -90,6 +89,7 @@ function PlateScanner() {
           axios
             .post("https://plate-scanner-server.onrender.com/api/detect-plate", { image: dataURL })
             .then((res) => {
+              console.log("API response:", res.data);
               setDetectedText(res.data.plate || "No text detected");
             })
             .catch((err) => {
@@ -102,7 +102,7 @@ function PlateScanner() {
         frameCounter.current = 0;
       }
 
-      // Cleanup Mats
+      // Cleanup
       src.delete();
       gray.delete();
       edges.delete();
