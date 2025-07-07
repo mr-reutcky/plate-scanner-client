@@ -58,7 +58,7 @@ function PlateScanner() {
         setStatus("Possible plate detected");
         frameCounter.current++;
 
-        if (frameCounter.current % 300 === 0) {
+        if (frameCounter.current % 100 === 0) {
           console.log("Detected plate for 300 frames, making API call.");
           const cropCanvas = document.createElement("canvas");
           cropCanvas.width = rectToCrop.width;
