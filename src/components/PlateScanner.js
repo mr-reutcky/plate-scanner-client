@@ -11,6 +11,7 @@ function PlateScanner() {
   const frameCounter = useRef(0);
   const lastApiCallTimeRef = useRef(0);
   const cooldownPeriod = 3000;
+  const coolDownFrames = 60;
 
   const processFrame = () => {
     try {
@@ -62,7 +63,7 @@ function PlateScanner() {
 
         const now = Date.now();
         if (
-          frameCounter.current >= 30 &&
+          frameCounter.current >= coolDownFrames &&
           now - lastApiCallTimeRef.current > cooldownPeriod
         ) {
           console.log("Making API call after 30 detections and cooldown...");
