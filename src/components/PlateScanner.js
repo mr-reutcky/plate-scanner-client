@@ -103,7 +103,6 @@ function PlateScanner() {
         frameCounter.current = 0;
       }
 
-      // Cleanup
       src.delete();
       gray.delete();
       edges.delete();
