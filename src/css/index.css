@@ -72,3 +72,68 @@ video {
   display: none;
 }
 
+/* Plate Guide Box */
+.plate-guide {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.corner {
+  position: absolute;
+  background-color: lime;
+}
+
+/* Horizontal lines */
+.corner.horizontal {
+  height: 2px;
+  width: 20px;
+}
+
+/* Vertical lines */
+.corner.vertical {
+  width: 2px;
+  height: 20px;
+}
+
+/* Corner positioning */
+.top-left.horizontal {
+  top: 0;
+  left: 0;
+}
+.top-left.vertical {
+  top: 0;
+  left: 0;
+}
+
+.top-right.horizontal {
+  top: 0;
+  right: 0;
+}
+.top-right.vertical {
+  top: 0;
+  right: 0;
+}
+
+.bottom-left.horizontal {
+  bottom: 0;
+  left: 0;
+}
+.bottom-left.vertical {
+  bottom: 0;
+  left: 0;
+}
+
+.bottom-right.horizontal {
+  bottom: 0;
+  right: 0;
+}
+.bottom-right.vertical {
+  bottom: 0;
+  right: 0;
+}
+
+
