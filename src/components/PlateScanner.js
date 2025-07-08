@@ -21,7 +21,7 @@ function PlateScanner() {
 
   // Cooldown settings for limiting API calls
   const cooldownPeriod = 3000; // ms
-  const coolDownFrames = 60;
+  const coolDownFrames = 15;
 
   // Constants for guide box size and margins
   const GUIDE_WIDTH = 300;
