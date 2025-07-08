@@ -14,7 +14,6 @@ function PlateScanner() {
   const cooldownPeriod = 3000;
   const coolDownFrames = 60;
 
-  // Guide box settings
   const GUIDE_WIDTH = 300;
   const GUIDE_HEIGHT = 150;
   const MARGIN = 20;
@@ -30,15 +29,33 @@ function PlateScanner() {
         return;
       }
 
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const videoWidth = video.videoWidth;
+      const videoHeight = video.videoHeight;
+      const canvasWidth = canvas.width;
+      const canvasHeight = canvas.height;
 
-      // Define guide box region
-      const guideX = Math.floor((canvas.width - GUIDE_WIDTH) / 2) - MARGIN;
-      const guideY = Math.floor((canvas.height - GUIDE_HEIGHT) / 2) - MARGIN;
+      const cropX = Math.floor((videoWidth - canvasWidth) / 2);
+      const cropY = Math.floor((videoHeight - canvasHeight) / 2);
+
+      // Draw center crop of video to canvas
+      ctx.drawImage(
+        video,
+        cropX,
+        cropY,
+        canvasWidth,
+        canvasHeight,
+        0,
+        0,
+        canvasWidth,
+        canvasHeight
+      );
+
+      // Guide box region
+      const guideX = Math.floor((canvasWidth - GUIDE_WIDTH) / 2) - MARGIN;
+      const guideY = Math.floor((canvasHeight - GUIDE_HEIGHT) / 2) - MARGIN;
       const regionWidth = GUIDE_WIDTH + MARGIN * 2;
       const regionHeight = GUIDE_HEIGHT + MARGIN * 2;
 
-      // Crop detection region from canvas
       const croppedImageData = ctx.getImageData(guideX, guideY, regionWidth, regionHeight);
       const croppedMat = cv.matFromImageData(croppedImageData);
 
@@ -69,7 +86,6 @@ function PlateScanner() {
         candidates.sort((a, b) => b.width * b.height - a.width * a.height);
         const rectToCrop = candidates[0];
 
-        // Offset the rect to global canvas coordinates
         const globalRect = {
           x: rectToCrop.x + guideX,
           y: rectToCrop.y + guideY,
@@ -89,7 +105,6 @@ function PlateScanner() {
           frameCounter.current >= coolDownFrames &&
           now - lastApiCallTimeRef.current > cooldownPeriod
         ) {
-          console.log("Making API call after 30 detections and cooldown...");
           lastApiCallTimeRef.current = now;
           frameCounter.current = 0;
 
@@ -113,7 +128,6 @@ function PlateScanner() {
           axios
             .post("https://plate-scanner-server.onrender.com/api/detect-plate", { image: dataURL })
             .then((res) => {
-              console.log("API response:", res.data);
               const plate = res.data.plate;
               if (plate) {
                 setDetectedText(plate);
@@ -122,7 +136,6 @@ function PlateScanner() {
                 setDetectedText("No text detected");
                 boxColorRef.current = "red";
               }
-
               setTimeout(() => {
                 boxColorRef.current = "lightblue";
               }, 3000);
@@ -165,11 +178,12 @@ function PlateScanner() {
       );
 
       let constraints;
-
       if (rearCamera) {
         constraints = {
           video: {
             deviceId: { exact: rearCamera.deviceId },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
             frameRate: { ideal: 30, max: 30 }
           }
         };
@@ -177,6 +191,8 @@ function PlateScanner() {
         constraints = {
           video: {
             facingMode: { ideal: "environment" },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
             frameRate: { ideal: 30, max: 30 }
           }
         };

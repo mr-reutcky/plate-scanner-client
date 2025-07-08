@@ -1,4 +1,4 @@
-/* Remove default margins and set background */
+/* Base styles and layout */
 html, body, #root {
   margin: 0;
   padding: 0;
@@ -6,21 +6,34 @@ html, body, #root {
   width: 100%;
   background: black;
   font-family: Arial, sans-serif;
+  overflow: hidden;
 }
 
-/* Make the container fill viewport */
+/* Main app container */
 #root {
   position: relative;
+  overflow: hidden;
 }
 
-/* Fullscreen canvas */
+/* Centered canvas with fixed aspect ratio (prevents distortion) */
 canvas {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   display: block;
+  width: auto;
+  height: auto;
+  max-width: 100vw;
+  max-height: 100vh;
+  aspect-ratio: 4 / 3;
+  background: black;
+  z-index: 1;
+}
+
+/* Hide video stream */
+video {
+  display: none;
 }
 
 /* Light blue top overlay */
@@ -29,7 +42,7 @@ canvas {
   top: 1rem;
   left: 50%;
   transform: translateX(-50%);
-  color: #4fc3f7; /* Light blue */
+  color: #4fc3f7;
   font-size: 1.25rem;
   font-weight: bold;
   text-align: center;
@@ -38,9 +51,10 @@ canvas {
   background: rgba(0, 0, 0, 0.5);
   border-radius: 6px;
   max-width: 90%;
+  z-index: 2;
 }
 
-/* Start button with light blue */
+/* Start button with light blue styling */
 .start-button {
   position: absolute;
   bottom: 2rem;
@@ -55,21 +69,7 @@ canvas {
   cursor: pointer;
   font-weight: bold;
   box-shadow: 0 0 10px #4fc3f7;
-}
-
-/* Full page layout */
-html, body, #root {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  width: 100%;
-  background: black;
-  font-family: Arial, sans-serif;
-}
-
-/* Hide video stream */
-video {
-  display: none;
+  z-index: 2;
 }
 
 /* Plate Guide Box */
@@ -79,7 +79,7 @@ video {
   left: 50%;
   transform: translate(-50%, -50%);
   pointer-events: none;
-  z-index: 1000;
+  z-index: 3;
 }
 
 .corner {
@@ -100,40 +100,14 @@ video {
 }
 
 /* Corner positioning */
-.top-left.horizontal {
-  top: 0;
-  left: 0;
-}
-.top-left.vertical {
-  top: 0;
-  left: 0;
-}
+.top-left.horizontal { top: 0; left: 0; }
+.top-left.vertical   { top: 0; left: 0; }
 
-.top-right.horizontal {
-  top: 0;
-  right: 0;
-}
-.top-right.vertical {
-  top: 0;
-  right: 0;
-}
+.top-right.horizontal { top: 0; right: 0; }
+.top-right.vertical   { top: 0; right: 0; }
 
-.bottom-left.horizontal {
-  bottom: 0;
-  left: 0;
-}
-.bottom-left.vertical {
-  bottom: 0;
-  left: 0;
-}
+.bottom-left.horizontal { bottom: 0; left: 0; }
+.bottom-left.vertical   { bottom: 0; left: 0; }
 
-.bottom-right.horizontal {
-  bottom: 0;
-  right: 0;
-}
-.bottom-right.vertical {
-  bottom: 0;
-  right: 0;
-}
-
-
+.bottom-right.horizontal { bottom: 0; right: 0; }
+.bottom-right.vertical   { bottom: 0; right: 0; }
