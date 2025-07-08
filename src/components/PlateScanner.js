@@ -29,24 +29,25 @@ function PlateScanner() {
         return;
       }
 
-      const videoWidth = video.videoWidth;
-      const videoHeight = video.videoHeight;
       const canvasWidth = canvas.width;
       const canvasHeight = canvas.height;
 
-      // Crop center 9:16 region from video
-      const targetAspect = 9 / 16;
+      const videoWidth = video.videoWidth;
+      const videoHeight = video.videoHeight;
+
+      const targetAspect = canvasWidth / canvasHeight;
       const videoAspect = videoWidth / videoHeight;
 
       let sx, sy, sw, sh;
+
       if (videoAspect > targetAspect) {
-        // Video too wide → crop sides
+        // Camera is wider — crop horizontally (center cut)
         sh = videoHeight;
         sw = sh * targetAspect;
         sx = (videoWidth - sw) / 2;
         sy = 0;
       } else {
-        // Video too tall → crop top/bottom
+        // Camera is narrower — crop vertically
         sw = videoWidth;
         sh = sw / targetAspect;
         sx = 0;
@@ -172,38 +173,17 @@ function PlateScanner() {
 
   const startCamera = async () => {
     try {
-      const tempStream = await navigator.mediaDevices.getUserMedia({ video: true });
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      tempStream.getTracks().forEach((track) => track.stop());
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: "environment" },
+          width: { ideal: 1280 },
+          height: { ideal: 1920 },
+          frameRate: { ideal: 30, max: 30 },
+        }
+      });
 
-      const rearCamera = devices.find(
-        (device) => device.kind === "videoinput" && /back|rear/i.test(device.label)
-      );
-
-      let constraints;
-      if (rearCamera) {
-        constraints = {
-          video: {
-            deviceId: { exact: rearCamera.deviceId },
-            width: { exact: 1080 },
-            height: { exact: 1920 },
-            frameRate: { ideal: 30, max: 30 }
-          }
-        };
-      } else {
-        constraints = {
-          video: {
-            facingMode: { ideal: "environment" },
-            width: { exact: 1080 },
-            height: { exact: 1920 },
-            frameRate: { ideal: 30, max: 30 }
-          }
-        };
-      }
-
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       videoRef.current.srcObject = stream;
-      videoRef.current.play();
+      await videoRef.current.play();
       setTimeout(() => processFrame(), 500);
       setCameraStarted(true);
       setStatus("No plate detected");
