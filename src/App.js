@@ -6,7 +6,7 @@ function App() {
   return (
     <div>
       <h1>License Plate Scanner Demo</h1>
-      <PlateGuideBox height={150} width={300} />
+      <PlateGuideBox height={100} width={200} />
       <PlateScanner />
     </div>
   );

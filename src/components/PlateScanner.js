@@ -14,8 +14,8 @@ function PlateScanner() {
   const cooldownPeriod = 3000;
   const coolDownFrames = 60;
 
-  const GUIDE_WIDTH = 300;
-  const GUIDE_HEIGHT = 150;
+  const GUIDE_WIDTH = 200;
+  const GUIDE_HEIGHT = 100;
   const MARGIN = 20;
 
   const processFrame = () => {
@@ -34,23 +34,27 @@ function PlateScanner() {
       const canvasWidth = canvas.width;
       const canvasHeight = canvas.height;
 
-      const cropX = Math.floor((videoWidth - canvasWidth) / 2);
-      const cropY = Math.floor((videoHeight - canvasHeight) / 2);
+      // Crop center to match 9:16
+      const targetAspect = 9 / 16;
+      const videoAspect = videoWidth / videoHeight;
 
-      // Draw center crop of video to canvas
-      ctx.drawImage(
-        video,
-        cropX,
-        cropY,
-        canvasWidth,
-        canvasHeight,
-        0,
-        0,
-        canvasWidth,
-        canvasHeight
-      );
+      let sx, sy, sw, sh;
+      if (videoAspect > targetAspect) {
+        // Video is too wide
+        sh = videoHeight;
+        sw = sh * targetAspect;
+        sx = (videoWidth - sw) / 2;
+        sy = 0;
+      } else {
+        // Video is too tall
+        sw = videoWidth;
+        sh = sw / targetAspect;
+        sx = 0;
+        sy = (videoHeight - sh) / 2;
+      }
 
-      // Guide box region
+      ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvasWidth, canvasHeight);
+
       const guideX = Math.floor((canvasWidth - GUIDE_WIDTH) / 2) - MARGIN;
       const guideY = Math.floor((canvasHeight - GUIDE_HEIGHT) / 2) - MARGIN;
       const regionWidth = GUIDE_WIDTH + MARGIN * 2;
@@ -173,8 +177,7 @@ function PlateScanner() {
       tempStream.getTracks().forEach((track) => track.stop());
 
       const rearCamera = devices.find(
-        (device) =>
-          device.kind === "videoinput" && /back|rear/i.test(device.label)
+        (device) => device.kind === "videoinput" && /back|rear/i.test(device.label)
       );
 
       let constraints;
@@ -182,8 +185,8 @@ function PlateScanner() {
         constraints = {
           video: {
             deviceId: { exact: rearCamera.deviceId },
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
+            width: { ideal: 720 },
+            height: { ideal: 1280 },
             frameRate: { ideal: 30, max: 30 }
           }
         };
@@ -191,8 +194,8 @@ function PlateScanner() {
         constraints = {
           video: {
             facingMode: { ideal: "environment" },
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
+            width: { ideal: 720 },
+            height: { ideal: 1280 },
             frameRate: { ideal: 30, max: 30 }
           }
         };
@@ -227,7 +230,7 @@ function PlateScanner() {
   return (
     <div>
       <video ref={videoRef} style={{ display: "none" }} />
-      <canvas ref={canvasRef} width={640} height={480} />
+      <canvas ref={canvasRef} width={360} height={640} />
       <div className="status-overlay top">
         <div>Status: {status}</div>
         <div>{detectedText}</div>
