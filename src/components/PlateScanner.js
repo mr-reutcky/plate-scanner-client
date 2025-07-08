@@ -8,6 +8,7 @@ function PlateScanner() {
   const [status, setStatus] = useState("Ready to start camera");
   const [detectedText, setDetectedText] = useState("");
   const [cameraStarted, setCameraStarted] = useState(false);
+  const boxColorRef = useRef("lightblue");
   const frameCounter = useRef(0);
   const lastApiCallTimeRef = useRef(0);
   const cooldownPeriod = 3000;
@@ -54,7 +55,7 @@ function PlateScanner() {
         candidates.sort((a, b) => b.width * b.height - a.width * a.height);
         const rectToCrop = candidates[0];
 
-        ctx.strokeStyle = "red";
+        ctx.strokeStyle = boxColorRef.current;
         ctx.lineWidth = 2;
         ctx.strokeRect(rectToCrop.x, rectToCrop.y, rectToCrop.width, rectToCrop.height);
 
@@ -91,11 +92,26 @@ function PlateScanner() {
             .post("https://plate-scanner-server.onrender.com/api/detect-plate", { image: dataURL })
             .then((res) => {
               console.log("API response:", res.data);
-              setDetectedText(res.data.plate || "No text detected");
+              const plate = res.data.plate;
+              if (plate) {
+                setDetectedText(plate);
+                boxColorRef.current = "green";
+              } else {
+                setDetectedText("No text detected");
+                boxColorRef.current = "red";
+              }
+
+              setTimeout(() => {
+                boxColorRef.current = "lightblue";
+              }, 3000);
             })
             .catch((err) => {
               console.error("API error:", err);
               setDetectedText("API error");
+              boxColorRef.current = "red";
+              setTimeout(() => {
+                boxColorRef.current = "lightblue";
+              }, 3000);
             });
         }
       } else {
@@ -123,8 +139,7 @@ function PlateScanner() {
 
       const rearCamera = devices.find(
         (device) =>
-          device.kind === "videoinput" &&
-          /back|rear/i.test(device.label)
+          device.kind === "videoinput" && /back|rear/i.test(device.label)
       );
 
       let constraints;
