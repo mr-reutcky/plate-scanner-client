@@ -14,6 +14,11 @@ function PlateScanner() {
   const cooldownPeriod = 3000;
   const coolDownFrames = 60;
 
+  // Guide box settings
+  const GUIDE_WIDTH = 300;
+  const GUIDE_HEIGHT = 150;
+  const MARGIN = 20;
+
   const processFrame = () => {
     try {
       const video = videoRef.current;
@@ -27,13 +32,22 @@ function PlateScanner() {
 
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-      const src = cv.imread(canvas);
+      // Define guide box region
+      const guideX = Math.floor((canvas.width - GUIDE_WIDTH) / 2) - MARGIN;
+      const guideY = Math.floor((canvas.height - GUIDE_HEIGHT) / 2) - MARGIN;
+      const regionWidth = GUIDE_WIDTH + MARGIN * 2;
+      const regionHeight = GUIDE_HEIGHT + MARGIN * 2;
+
+      // Crop detection region from canvas
+      const croppedImageData = ctx.getImageData(guideX, guideY, regionWidth, regionHeight);
+      const croppedMat = cv.matFromImageData(croppedImageData);
+
       const gray = new cv.Mat();
       const edges = new cv.Mat();
       const contours = new cv.MatVector();
       const hierarchy = new cv.Mat();
 
-      cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
+      cv.cvtColor(croppedMat, gray, cv.COLOR_RGBA2GRAY, 0);
       cv.Canny(gray, edges, 50, 150, 3, false);
       cv.findContours(edges, contours, hierarchy, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE);
 
@@ -55,9 +69,17 @@ function PlateScanner() {
         candidates.sort((a, b) => b.width * b.height - a.width * a.height);
         const rectToCrop = candidates[0];
 
+        // Offset the rect to global canvas coordinates
+        const globalRect = {
+          x: rectToCrop.x + guideX,
+          y: rectToCrop.y + guideY,
+          width: rectToCrop.width,
+          height: rectToCrop.height,
+        };
+
         ctx.strokeStyle = boxColorRef.current;
         ctx.lineWidth = 2;
-        ctx.strokeRect(rectToCrop.x, rectToCrop.y, rectToCrop.width, rectToCrop.height);
+        ctx.strokeRect(globalRect.x, globalRect.y, globalRect.width, globalRect.height);
 
         setStatus("Possible plate detected");
         frameCounter.current++;
@@ -72,19 +94,19 @@ function PlateScanner() {
           frameCounter.current = 0;
 
           const cropCanvas = document.createElement("canvas");
-          cropCanvas.width = rectToCrop.width;
-          cropCanvas.height = rectToCrop.height;
+          cropCanvas.width = globalRect.width;
+          cropCanvas.height = globalRect.height;
           const cropCtx = cropCanvas.getContext("2d");
           cropCtx.drawImage(
             canvas,
-            rectToCrop.x,
-            rectToCrop.y,
-            rectToCrop.width,
-            rectToCrop.height,
+            globalRect.x,
+            globalRect.y,
+            globalRect.width,
+            globalRect.height,
             0,
             0,
-            rectToCrop.width,
-            rectToCrop.height
+            globalRect.width,
+            globalRect.height
           );
           const dataURL = cropCanvas.toDataURL("image/jpeg");
 
@@ -119,7 +141,7 @@ function PlateScanner() {
         frameCounter.current = 0;
       }
 
-      src.delete();
+      croppedMat.delete();
       gray.delete();
       edges.delete();
       contours.delete();
