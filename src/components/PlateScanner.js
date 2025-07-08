@@ -14,8 +14,8 @@ function PlateScanner() {
   const cooldownPeriod = 3000;
   const coolDownFrames = 60;
 
-  const GUIDE_WIDTH = 200;
-  const GUIDE_HEIGHT = 100;
+  const GUIDE_WIDTH = 300;
+  const GUIDE_HEIGHT = 150;
   const MARGIN = 20;
 
   const processFrame = () => {
@@ -34,19 +34,19 @@ function PlateScanner() {
       const canvasWidth = canvas.width;
       const canvasHeight = canvas.height;
 
-      // Crop center to match 9:16
+      // Crop center 9:16 region from video
       const targetAspect = 9 / 16;
       const videoAspect = videoWidth / videoHeight;
 
       let sx, sy, sw, sh;
       if (videoAspect > targetAspect) {
-        // Video is too wide
+        // Video too wide → crop sides
         sh = videoHeight;
         sw = sh * targetAspect;
         sx = (videoWidth - sw) / 2;
         sy = 0;
       } else {
-        // Video is too tall
+        // Video too tall → crop top/bottom
         sw = videoWidth;
         sh = sw / targetAspect;
         sx = 0;
@@ -185,8 +185,8 @@ function PlateScanner() {
         constraints = {
           video: {
             deviceId: { exact: rearCamera.deviceId },
-            width: { ideal: 720 },
-            height: { ideal: 1280 },
+            width: { exact: 1080 },
+            height: { exact: 1920 },
             frameRate: { ideal: 30, max: 30 }
           }
         };
@@ -194,8 +194,8 @@ function PlateScanner() {
         constraints = {
           video: {
             facingMode: { ideal: "environment" },
-            width: { ideal: 720 },
-            height: { ideal: 1280 },
+            width: { exact: 1080 },
+            height: { exact: 1920 },
             frameRate: { ideal: 30, max: 30 }
           }
         };
@@ -230,7 +230,7 @@ function PlateScanner() {
   return (
     <div>
       <video ref={videoRef} style={{ display: "none" }} />
-      <canvas ref={canvasRef} width={360} height={640} />
+      <canvas ref={canvasRef} width={720} height={1280} />
       <div className="status-overlay top">
         <div>Status: {status}</div>
         <div>{detectedText}</div>
