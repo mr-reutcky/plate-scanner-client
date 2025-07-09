@@ -140,6 +140,7 @@ function PlateScanner() {
             .post("https://plate-scanner-server.onrender.com/api/detect-plate", { image: dataURL })
             .then((res) => {
               const plate = res.data.plate;
+
               if (plate) {
                 setDetectedText(plate);
                 boxColorRef.current = "green";
