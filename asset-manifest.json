@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/plate-scanner-client/static/css/main.eec3b7ed.css",
-    "main.js": "/plate-scanner-client/static/js/main.c9753a69.js",
+    "main.js": "/plate-scanner-client/static/js/main.ecd39724.js",
     "index.html": "/plate-scanner-client/index.html",
     "main.eec3b7ed.css.map": "/plate-scanner-client/static/css/main.eec3b7ed.css.map",
-    "main.c9753a69.js.map": "/plate-scanner-client/static/js/main.c9753a69.js.map"
+    "main.ecd39724.js.map": "/plate-scanner-client/static/js/main.ecd39724.js.map"
   },
   "entrypoints": [
     "static/css/main.eec3b7ed.css",
-    "static/js/main.c9753a69.js"
+    "static/js/main.ecd39724.js"
   ]
 }
