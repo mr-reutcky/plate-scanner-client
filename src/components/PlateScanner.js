@@ -119,7 +119,7 @@ function PlateScanner() {
 
         // Draw bounding box around detected region
         ctx.strokeStyle = boxColorRef.current;
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 4;
         ctx.strokeRect(globalRect.x, globalRect.y, globalRect.width, globalRect.height);
 
         setStatus("Possible plate detected");
